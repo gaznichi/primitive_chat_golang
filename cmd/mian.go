@@ -5,10 +5,27 @@ import (
 	"net/http"
 
 	socketio "github.com/googollee/go-socket.io"
+	"github.com/googollee/go-socket.io/engineio"
+	"github.com/googollee/go-socket.io/engineio/transport"
+	"github.com/googollee/go-socket.io/engineio/transport/polling"
+	"github.com/googollee/go-socket.io/engineio/transport/websocket"
 )
 
+var allowOriginFunc = func(r *http.Request) bool {
+	return true
+}
+
 func main() {
-	server := socketio.NewServer(nil)
+	server := socketio.NewServer(&engineio.Options{
+		Transports: []transport.Transport{
+			&polling.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+			&websocket.Transport{
+				CheckOrigin: allowOriginFunc,
+			},
+		},
+	})
 
 	server.OnConnect("/", func(s socketio.Conn) error {
 		s.SetContext("")
@@ -51,6 +68,6 @@ func main() {
 	http.Handle("/socket.io/", server)
 	http.Handle("/", http.FileServer(http.Dir("../static")))
 
-	log.Println("Serving at localhost:9999...")
-	log.Fatal(http.ListenAndServe(":9999", nil))
+	log.Println("Serving at localhost:8000...")
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
